@@ -12,9 +12,8 @@ public class ServerConnection extends Component {
     private long timestamp;
     private int ping;
     public int port;
-    public String ip;
     public ObjectFile player_object;
-    public List<player> players = new ArrayList();
+    public List<PlayerSession> players = new ArrayList();
 
     @Override
     public void start() {
@@ -23,7 +22,7 @@ public class ServerConnection extends Component {
 
     @Override
     public void repeat() {
-        for(player player: players) {
+        for(PlayerSession player: players) {
             if(!player.active) {
                 player.player_object.destroy();
                 players.remove(player);
@@ -59,7 +58,8 @@ public class ServerConnection extends Component {
     
     public void ping_server() {
         PingPacket packet = new PingPacket();
-        packet.timestamp = System.currentTimeMillis();
+        timestamp = System.currentTimeMillis();
+        packet.timestamp = timestamp;
         packet.encode();
         send_server(packet.buffer.array());
     }
@@ -71,6 +71,7 @@ public class ServerConnection extends Component {
         
         CloseConnectionPacket packet = new CloseConnectionPacket();
         packet.client_id = client_id;
+        packet.encode();
         send_server(packet.buffer.array());
     }
     
@@ -105,8 +106,8 @@ public class ServerConnection extends Component {
         return null; 
     }
     
-    public player get_player_by_id(String id) {
-        for(player player: players) {
+    public PlayerSession get_player_by_id(String id) {
+        for(PlayerSession player: players) {
             if(player.client_id == id) {
                 return player;
             }
@@ -116,27 +117,36 @@ public class ServerConnection extends Component {
     }
     
     
-    private void bind_socket()
-    {
-        try
-        {
-            if(SaveGame.loadString("host-ip") == null) {
-                SaveGame.saveString("host-ip", "localhost");
-            }
-            
-            port = SaveGame.loadInt("host-port");
-            
-            if(port == 0) {
-                SaveGame.saveInt("host-port", 19132);
-            }
-            
-            address = InetAddress.getByName(SaveGame.loadString("host-ip"));
-            ip = SaveGame.loadString("host-ip");
-            port = SaveGame.loadInt("host-port");
+    private void bind_socket() {
+        try {
+            address = InetAddress.getByName(get_host_ip());
+            port = get_host_port();
             socket = new DatagramSocket();       
         } catch(Exception e) {
             Console.log(e);
         }
+    }
+    
+    private String get_host_ip() {
+        String ip = SaveGame.loadString("host-ip");
+        
+        if(ip == null) {
+            SaveGame.saveString("host-ip", "localhost");
+            return "localhost";
+        }
+        
+        return ip;
+    }
+    
+    private int get_host_port() {
+        int port = SaveGame.loadInt("host-ip");
+        
+        if(port == 0) {
+            SaveGame.saveInt("host-ip", 19132);
+            return 19132;
+        }
+        
+        return port;
     }
     
     
@@ -167,7 +177,7 @@ public class ServerConnection extends Component {
                            UpdatePositionPacket packet = new UpdatePositionPacket();
                            packet.buffer = buffer;
                            packet.decode();
-                           player player = get_player_by_id(packet.client_id);
+                           PlayerSession player = get_player_by_id(packet.client_id);
                            player.position = packet.position;
                            player.rotation = packet.rotation;
                        }
@@ -183,7 +193,7 @@ public class ServerConnection extends Component {
                             CloseConnectionPacket packet = new CloseConnectionPacket();
                             packet.buffer = buffer;
                             packet.decode();
-                            player player = get_player_by_id(packet.client_id);
+                            PlayerSession player = get_player_by_id(packet.client_id);
                             player.active = false;
                        }
                    }
@@ -198,40 +208,3 @@ public class ServerConnection extends Component {
         });
     }
 }
-
-class player {
-    public String client_id;
-    public Vector3 position = new Vector3();
-    public Quaternion rotation = new Quaternion();
-    public String name;
-    public SpatialObject player_object;
-    public boolean active = false;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -6,7 +6,7 @@ public class OpenSessionPacket {
     
     private static int PID = 0x01;
     public ByteBuffer buffer;
-    public player player_session;
+    public PlayerSession player_session;
     public String client_id;
     public String player_name;
     public Vector3 position;
@@ -26,7 +26,7 @@ public class OpenSessionPacket {
     }
     
     public void decode() {
-        player_session = new player();
+        player_session = new PlayerSession();
         
         player_session.client_id = BinaryUtils.read_string(buffer, 10);
         player_session.name = BinaryUtils.read_string(buffer, 20);

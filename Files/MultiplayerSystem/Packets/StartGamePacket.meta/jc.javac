@@ -7,7 +7,7 @@ public class StartGamePacket {
     
     private static int PID = 0x04;
     public ByteBuffer buffer;
-    public List<player> players;
+    public List<PlayerSession> players = new ArrayList();
     
     public StartGamePacket() {
         
@@ -21,7 +21,7 @@ public class StartGamePacket {
         int players_count = buffer.getInt();
         
         for(int i = 0; i < players_count; i++) {
-            player player_session = new player();
+            PlayerSession player_session = new PlayerSession();
             
             player_session.position = BinaryUtils.read_vector3(buffer);
             player_session.rotation = BinaryUtils.read_quaternion(buffer);
